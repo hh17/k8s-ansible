@@ -1,0 +1,64 @@
+- name: add etcd user
+  user:
+      name: etcd
+
+- name: owner etcd 
+  file: 
+    path: "{{item}}"
+    state: directory
+    owner: etcd
+    group: etcd
+    recurse: 1
+  with_items:
+      - "{{etcd_data_path}}"
+      - "{{etcd_path}}"
+      - "{{etcd_path}}/cfg"
+      - "{{etcd_path}}/bin"
+      - "{{etcd_path}}/ssl"
+
+- name: unarchive etcd bin
+  unarchive:
+    src: etcd/etcd_bin.tgz
+    dest: "{{etcd_path}}"
+
+- name: config cfg, service script for etcd
+  template:
+    src: '{{ item.src }}'
+    dest: '{{item.dest}}'
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+      - { src: 'etcd.conf', dest: '{{etcd_path}}/cfg/etcd.conf' }
+      - { src: 'etcd.service' ,dest: '/usr/lib/systemd/system/etcd.service' }
+  tags: etcdcf
+
+
+
+
+- name: cfssl
+  include: cfssl.yml
+  delegate_to: "{{ cfsmaster }}"
+  run_once: 1
+
+- name: rsync ssl  for etcd
+  unarchive:
+      src: "/tmp/{{ssltag_name}}"
+      dest: "{{etcd_path}}/ssl"
+
+- name: owner etcd ssl 
+  file: 
+    path: "{{etcd_path}}/ssl"
+    state: directory
+    owner: etcd
+    group: etcd
+    recurse: 1
+
+- name: enable etcd
+  systemd:
+      state: restarted
+      daemon_reload: yes
+      name: etcd
+      enabled: 1
+  ignore_errors: yes
+  tags: restart

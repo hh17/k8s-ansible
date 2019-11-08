@@ -1,0 +1,27 @@
+{%- set etccluster=[] %}
+{%- for i in groups['etcd']  -%}
+{{ etccluster.append("https://"+i+":2379") }}
+{% endfor -%}
+
+KUBE_APISERVER_OPTS="--logtostderr=true \
+--v=4 \
+--etcd-servers={{etccluster|join(',')}} \
+--bind-address={{ansible_ssh_host}} \
+--secure-port={{secure_port|default('6443')}} \
+--advertise-address={{ansible_ssh_host}} \
+--allow-privileged=true \
+--service-cluster-ip-range={{cluster_iprange}} \
+--enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,ResourceQuota,NodeRestriction \
+--authorization-mode=RBAC,Node \
+--enable-bootstrap-token-auth \
+--token-auth-file={{k8s_path}}/cfg/token.csv \
+--service-node-port-range=30000-50000 \
+--tls-cert-file={{k8s_path}}/ssl/k8s.pem  \
+--tls-private-key-file={{k8s_path}}/ssl/k8s-key.pem \
+--client-ca-file={{k8s_path}}/ssl/ca.pem \
+--service-account-key-file={{k8s_path}}/ssl/ca-key.pem \
+--kubelet-client-certificate={{k8s_path}}/ssl/k8s.pem \
+--kubelet-client-key={{k8s_path}}/ssl/k8s-key.pem \
+--etcd-cafile={{k8s_path}}/ssl/ca.pem \
+--etcd-certfile={{k8s_path}}/ssl/k8s.pem \
+--etcd-keyfile={{k8s_path}}/ssl/k8s-key.pem"

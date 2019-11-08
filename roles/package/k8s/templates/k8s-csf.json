@@ -1,0 +1,32 @@
+#jinja2: lstrip_blocks: 1
+{% set hosts_list=[cfsmaster] %}
+{% set host_last_list= groups['etcd'] | union(hosts_list) %}
+{
+    "CN": "{{ca_username}}",
+    "hosts": [
+        "127.0.0.1",
+        "10.254.0.1",
+        {% for i in host_last_list %}
+        "{{i}}",
+        {% endfor %}
+        "kubernetes",
+        "kubernetes.default",
+        "kubernetes.default.svc",
+        "kubernetes.default.svc.cluster",
+        "kubernetes.default.svc.cluster.local"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "CA",
+            "ST": "San Francisco",
+	    "O": "kubernetes",
+	    "OU": "System"
+        }
+    ]
+}
+

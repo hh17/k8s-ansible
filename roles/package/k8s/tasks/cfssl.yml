@@ -1,0 +1,46 @@
+- name: copy cfs bin file
+  copy:
+    src: '{{item.src}}'
+    dest: '{{item.name}}'
+    mode: 0755
+    #    remote_src: true
+  with_items:
+      - { src: "cfssl/cfssl_linux-amd64", name: "/usr/bin/cfssl" }
+      - { src: "cfssl/cfssljson_linux-amd64", name: "/usr/bin/cfssljson" }
+      - { src: "cfssl/cfssl-certinfo_linux-amd64", name: "/usr/bin/cfssl-certinfo" }
+  tags: cfsbin
+
+
+- name: create ca,k8s,proxy ssl  json config
+  template:
+      src: "{{item.src}}"
+      dest: "{{item.dest}}"
+  with_items:
+      - { src: "admin-csr.json", dest: "{{etcd_path}}/ssl/admin-csr.json"  }
+      - { src: "ca-config.json", dest: "{{etcd_path}}/ssl/ca-config.json"  }
+      - { src: "ca-csr.json", dest: "{{etcd_path}}/ssl/ca-csr.json"  }
+      - { src: "k8s-csf.json", dest: "{{etcd_path}}/ssl/k8s-csf.json"  }
+      - { src: "kube-proxy-csr.json", dest: "{{etcd_path}}/ssl/kube-proxy-csr.json"  }
+  tags: ssljson
+
+
+- name: create etcd,proxy,admin,k8s,ca  ssl
+  shell: |
+    cfssl gencert -initca ca-csr.json |cfssljson -bare ca
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=k8s admin-csr.json | cfssljson -bare admin
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=k8s k8s-csf.json | cfssljson -bare k8s
+    cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=k8s  kube-proxy-csr.json | cfssljson -bare kube-proxy
+  args:
+      chdir: "{{etcd_path}}/ssl"
+
+- name: archive etcd ssl file
+  archive:
+      path: "{{etcd_path}}/ssl/*"
+      dest: "/tmp/{{ssltag_name}}"
+
+- name: copy sslfile
+  fetch:
+      src: "/tmp/{{ssltag_name}}"
+      dest: "/tmp/{{ssltag_name}}"
+      flat: 1
+

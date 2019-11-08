@@ -1,0 +1,19 @@
+- name: create script for adding network
+  template:
+      src: node_network.sh
+      dest: /tmp/node_network.sh
+      mode: 0755
+
+- name: set nodes bin to profile
+  blockinfile:
+      block: |
+          PATH=$PATH:{{etcd_path}}/bin
+          PATH=$PATH:{{k8s_path}}/bin
+      path: /etc/profile
+      create: 1
+
+
+- name: add network
+  shell: sh node_network.sh
+  args:
+      chdir: /tmp/

@@ -1,0 +1,66 @@
+- name: add k8s user
+  user:
+      name: k8s
+
+- name: owner k8s
+  file: 
+    path: "{{item}}"
+    state: directory
+    owner: k8s
+    group: k8s
+    recurse: 1
+  with_items:
+      - "{{k8s_path}}"
+      - "{{k8s_path}}/cfg"
+      - "{{k8s_path}}/bin"
+      - "{{k8s_path}}/ssl"
+
+- name: unarchive k8s bin
+  unarchive:
+    src: k8s/k8s.tgz
+    dest: "{{k8s_path}}"
+
+- name: config  api,controller,scheduler
+  template:
+    src: '{{ item.src }}'
+    dest: '{{item.dest}}'
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+      - { src: 'kube-apiserver', dest: '{{k8s_path}}/cfg/kube-apiserver' }
+      - { src: 'kube-controller-manager', dest: '{{k8s_path}}/cfg/kube-controller-manager' }
+      - { src: 'kube-scheduler', dest: '{{k8s_path}}/cfg/kube-scheduler' }
+      - { src: 'token.csv', dest: '{{k8s_path}}/cfg/token.csv' }
+      - { src: 'kube-apiserver.service', dest: '/usr/lib/systemd/system/kube-apiserver.service' }
+      - { src: 'kube-controller-manager.service', dest: '/usr/lib/systemd/system/kube-controller-manager.service' }
+      - { src: 'kube-scheduler.service', dest: '/usr/lib/systemd/system/kube-scheduler.service' }
+  tags: k8scf
+
+
+
+- name: rsync ssl  for k8s
+  unarchive:
+      src: "/tmp/{{k8_ssltag_name}}"
+      dest: "{{k8s_path}}/ssl"
+
+- name: owner k8s  
+  file: 
+    path: "{{k8s_path}}"
+    state: directory
+    owner: k8s
+    group: k8s
+    recurse: 1
+
+- name: enable k8s
+  systemd:
+      state: restarted
+      daemon_reload: yes
+      name: "{{item}}"
+      enabled: 1
+  ignore_errors: yes
+  with_items:
+      - kube-apiserver
+      - kube-controller-manager
+      - kube-scheduler
+  tags: restart

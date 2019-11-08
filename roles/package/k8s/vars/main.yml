@@ -1,0 +1,14 @@
+cfsmaster: 10.152.0.12
+nodes_ssl_path: /k8s/nodes/ssl
+nodes_path: /k8s/nodes
+k8s_path: /k8s/kubernetes
+token: 201f9bd537b02cb8832c9efd7e7a1ff8
+cluster_iprange: '10.254.0.0/16'
+etcd_path: /k8s/etcd
+clusterdns: 10.254.0.10
+clusterdomain: 'cluster.local.'
+ca_username: k8s
+caexpiry: 87600
+ssltag_name: etcd-ssl.tgz
+k8_ssltag_name: k8s-ssl.tgz
+etcd_data_path: /data/etcd

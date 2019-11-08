@@ -1,0 +1,5 @@
+{%- set etccluster=[] %}
+{%- for i in groups['etcd']  -%}
+{{ etccluster.append( "https://"+i+":2379") }}
+{% endfor -%}
+FLANNEL_OPTIONS=" -ip-masq -etcd-endpoints '{{etccluster|join(',')}}' -etcd-cafile {{nodes_path}}/ssl/ca.pem -etcd-certfile {{nodes_path}}/ssl/k8s.pem -etcd-keyfile {{nodes_path}}/ssl/k8s-key.pem  -etcd-prefix /k8s/network"

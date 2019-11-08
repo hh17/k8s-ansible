@@ -1,0 +1,20 @@
+
+- name: config  coredns.yaml 
+  template:
+    src: '{{ item.src }}'
+    dest: '{{item.dest}}'
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+      - { src: 'coredns.yaml', dest: '{{k8s_path}}/cfg/coredns.yaml' }
+  tags: coredns-template
+
+- name: create coredns
+  shell: |
+      source /etc/profile
+      if [ `kubectl get pods --all-namespaces|grep coredns -c ` -eq 0 ];then
+      kubectl create -f coredns.yaml
+      fi
+  args:
+      chdir: "{{k8s_path}}/cfg"

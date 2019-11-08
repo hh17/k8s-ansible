@@ -1,0 +1,10 @@
+- name: archive k8s ssl file
+  archive:
+      path: /k8s/etcd/ssl/*.pem
+      dest: "/tmp/{{k8_ssltag_name}}"
+
+- name: copy sslfile
+  fetch:
+      src: "/tmp/{{k8_ssltag_name}}"
+      dest: "/tmp/{{k8_ssltag_name}}"
+      flat: 1

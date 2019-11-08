@@ -1,0 +1,10 @@
+KUBELET_OPTS="--logtostderr=true \
+--v=4 \
+--kubeconfig={{nodes_path}}/cfg/kubelet.kubeconfig \
+--bootstrap-kubeconfig={{nodes_path}}/cfg/bootstrap.kubeconfig \
+--config={{nodes_path}}/cfg/kubelet.config \
+--cert-dir={{nodes_ssl_path}} \
+--client-ca-file={{nodes_ssl_path}}/ca.pem \
+--cluster-dns={{clusterdns}} \
+--cluster-domain={{clusterdomain}} \
+--resolv-conf=/etc/resolv.conf"

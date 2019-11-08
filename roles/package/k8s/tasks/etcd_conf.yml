@@ -1,0 +1,21 @@
+- name: config cfg, service script for etcd
+  template:
+    src: '{{ item.src }}' 
+    dest: '{{item.dest}}' 
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+      - { src: 'etcd.conf', dest: '/k8s/etcd/cfg/etcd.conf' }
+      - { src: 'etcd.conf.yml.sample', dest: '/k8s/etcd/cfg/etcd.conf.yml' }
+      - { src: 'etcd.service' ,dest: '/usr/lib/systemd/system/etcd.service' }
+  tags: etcdcf
+
+
+- name: enable etcd
+  systemd:
+      state: restarted
+      daemon_reload: yes
+      name: etcd
+      enabled: 1
+  ignore_errors: yes

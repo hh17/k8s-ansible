@@ -1,0 +1,38 @@
+- name: etcd
+  include: etcd.yml
+  when: inventory_hostname in groups.get('etcd')
+
+- name: copy ssl
+  include: k8s_ssl.yml
+  delegate_to: "{{cfsmaster}}"
+  run_once: 1
+
+
+
+- name: k8s
+  include: k8s.yml
+  tags: k8s
+  when: inventory_hostname in groups.get('k8s')
+
+- name: etcd add network
+  include: etcd_add_network.yml
+  delegate_to: "{{cfsmaster}}"
+  tags: addnetwork
+  run_once: 1
+
+- name: k8-nodes
+  include: nodes.yml
+  tags: nodes
+  when: inventory_hostname in groups.get('k8snodes')
+
+
+- name: master accepts kubelet csr request
+  shell: |
+     source /etc/profile;  for i in `kubectl get csr|awk '/Pending/{print $1}'`;do kubectl certificate approve  $i;done
+  delegate_to: "{{cfsmaster}}"
+  run_once: 1
+
+- name: install coredns
+  include: coredns.yml
+  delegate_to: "{{cfsmaster}}"
+  run_once: 1

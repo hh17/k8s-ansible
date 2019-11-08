@@ -1,0 +1,11 @@
+[etcd]
+10.152.0.[9:11]
+[k8s]
+10.152.0.12
+[k8snodes]
+10.152.0.[7:8]
+
+[k8sall:children]
+etcd
+k8s
+k8snodes

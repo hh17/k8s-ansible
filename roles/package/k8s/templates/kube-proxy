@@ -1,0 +1,4 @@
+KUBE_PROXY_OPTS="--logtostderr=true \
+--v=4 \
+--cluster-cidr={{cluster_iprange}} \
+--kubeconfig={{nodes_path}}/cfg/kube-proxy.kubeconfig"

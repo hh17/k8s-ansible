@@ -1,0 +1,6 @@
+- name: install k8s,etcd
+  hosts: "{{host}}"
+  gather_facts: 0
+  roles:
+      - { role: package/k8s }
+

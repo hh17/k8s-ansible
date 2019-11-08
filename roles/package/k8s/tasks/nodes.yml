@@ -1,0 +1,91 @@
+- name: create nodes dir 
+  file: 
+    path: "{{item}}"
+    state: directory
+    owner: root
+    group: root
+    recurse: 1
+  with_items:
+      - "/k8s/nodes"
+      - "/k8s/nodes/cfg"
+      - "/k8s/nodes/bin"
+      - "/k8s/nodes/ssl"
+
+- name: unarchive k8s nodes bin
+  unarchive:
+    src: nodes/nodes_bin.tgz
+    dest: "{{nodes_path}}"
+  tags: nodesbin
+  
+
+- name: set nodes bin to profile
+  lineinfile:
+      line: 'PATH=$PATH:{{nodes_path}}/bin'
+      path: /etc/profile
+      create: 1
+
+- name: config  flanneld,docker,kubelet,kubelet-proxy 
+  template:
+    src: '{{ item.src }}'
+    dest: '{{item.dest}}'
+    owner: root
+    group: root
+    mode: "{{item.mode|default('0644')}}"
+  with_items:
+      - { src: 'flanneld', dest: '/k8s/nodes/cfg/flanneld' }
+      - { src: 'kube-proxy', dest: '/k8s/nodes/cfg/kube-proxy' }
+      - { src: 'kubelet', dest: '/k8s/nodes/cfg/kubelet' }
+      - { src: 'kubelet.config', dest: '/k8s/nodes/cfg/kubelet.config' }
+      - { src: 'env.sh', dest: '/k8s/nodes/cfg/env.sh', mode: "0755" }
+      - { src: 'docker-ce.repo', dest: '/etc/yum.repos.d/docker-ce.repo' }
+      - { src: 'docker.service', dest: '/usr/lib/systemd/system/docker.service' }
+      - { src: 'kubelet.service', dest: '/usr/lib/systemd/system/kubelet.service' }
+      - { src: 'kube-proxy.service', dest: '/usr/lib/systemd/system/kube-proxy.service' }
+      - { src: 'flanneld.service', dest: '/usr/lib/systemd/system/flanneld.service' }
+  tags: nodescfg
+
+
+- name: copy ssl
+  include: k8s_ssl.yml
+  delegate_to: "{{cfsmaster}}"
+  run_once: 1
+
+- name: rsync ssl  for node
+  unarchive:
+      src: "/tmp/{{k8_ssltag_name}}"
+      dest: "{{nodes_ssl_path}}"
+
+- name: install docker
+  yum:
+      name: docker-ce
+
+
+      
+- name: init nodes config
+  shell: |
+      source /etc/profile; sh env.sh
+  args:
+      chdir: "{{nodes_path}}/cfg"
+
+
+- name: remove all client x509 tls
+  shell: |
+       rm -rf kubelet-client*.pem
+  args:
+      chdir: "{{nodes_path}}/ssl"
+
+- name: enable nodes
+  systemd:
+      state: restarted
+      daemon_reload: yes
+      name: "{{item}}"
+      enabled: 1
+  ignore_errors: yes
+  with_items:
+      - flanneld
+      - docker
+      - kubelet
+      - kube-proxy
+  tags: restart
+
+

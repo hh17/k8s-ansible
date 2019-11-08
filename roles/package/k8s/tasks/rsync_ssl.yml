@@ -1,0 +1,11 @@
+- name: copy ssl file
+  copy:
+      src: "/tmp/{{ssltag_name}}"
+      dest: "/tmp/{{ssltag_name}}"
+
+
+- name: unarchive etcd ssl
+  unarchive:
+      src: "/tmp/{{ssltag_name}}"
+      dest: "{{etcd_path}}/ssl"
+      remote_src: 1

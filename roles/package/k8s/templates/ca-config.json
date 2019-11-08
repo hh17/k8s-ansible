@@ -1,0 +1,18 @@
+{
+    "signing": {
+        "default": {
+            "expiry": "{{caexpiry|default('87600')}}h"
+        },
+        "profiles": {
+            "{{ca_username}}": {
+                "expiry": "{{caexpiry|default('87600')}}h",
+                "usages": [
+                    "signing",
+                    "key encipherment",
+                    "server auth",
+                    "client auth"
+                ]
+            }
+        }
+    }
+}
